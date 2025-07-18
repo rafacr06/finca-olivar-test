@@ -1,80 +1,56 @@
 
 import streamlit as st
 import pandas as pd
-from openpyxl import load_workbook
 import os
 
-st.set_page_config(page_title="Gestión Finca de Olivar", layout="wide")
-st.markdown("""
-<style>
-    .main {background-color: #f4f4f4; padding: 1rem;}
-    .block-container {padding: 2rem 2rem;}
-    h1 {color: #2E7D32;}
-    .stButton>button {background-color: #4CAF50; color: white; border-radius: 8px; height: 2.5em;}
-</style>
-""", unsafe_allow_html=True)
+st.set_page_config(page_title="Gestión Olivar", layout="wide")
 
-st.title("🌿 Aplicación sencilla para gestionar tu finca de olivar")
-st.caption("Diseñada para ser fácil, clara y útil para agricultores")
-
-EXCEL_FILE = "finca_olivar_datos.xlsx"
+archivo = "finca.xlsx"
+hoja = "Finca"
 
 def cargar_datos():
-    if os.path.exists(EXCEL_FILE):
-        return pd.read_excel(EXCEL_FILE, sheet_name=None)
+    if os.path.exists(archivo):
+        df = pd.read_excel(archivo, sheet_name=hoja)
     else:
-        return {
-            "Finca": pd.DataFrame(columns=["ID Parcela", "Nombre", "Variedad", "Hectáreas", "Marco", "Riego"]),
-            "Labores": pd.DataFrame(columns=["Fecha", "Parcela", "Tipo", "Descripción", "Operario", "Horas", "Costo (€)"]),
-            "Costes": pd.DataFrame(columns=["Fecha", "Categoría", "Descripción", "Importe (€)", "Relacionado con"]),
-            "Ingresos": pd.DataFrame(columns=["Fecha", "Concepto", "Descripción", "Importe (€)", "Tipo"]),
-            "Inventario": pd.DataFrame(columns=["Producto", "Inicial", "Entrada", "Salida", "Stock", "Unidad"]),
-            "Rentabilidad": pd.DataFrame(columns=["Parcela", "Campaña", "Ingresos (€)", "Costes (€)", "Margen (€)", "Margen €/ha"])
-        }
+        df = pd.DataFrame(columns=["ID Parcela", "Nombre", "Variedad", "Hectáreas", "Marco", "Riego"])
+    return df
 
-def guardar_datos(xls):
-    with pd.ExcelWriter(EXCEL_FILE, engine="openpyxl") as writer:
-        for sheet, df in xls.items():
-            df.to_excel(writer, sheet_name=sheet, index=False)
+def guardar_datos(df):
+    with pd.ExcelWriter(archivo, engine="openpyxl", mode="w") as writer:
+        df.to_excel(writer, sheet_name=hoja, index=False)
 
-if "datos" not in st.session_state:
-    st.session_state["datos"] = cargar_datos()
+st.title("🌿 Aplicación sencilla para gestionar tu finca de olivar")
+st.caption("Diseñada para ser fácil, clara y útil para agricultores2")
 
-datos = st.session_state["datos"]
+st.header("📋 Gestión de Finca")
 
-menu = st.sidebar.selectbox("📘 ¿Qué quieres gestionar?", list(datos.keys()) + ["Ver resumen de todo"])
+df = cargar_datos()
+st.dataframe(df, use_container_width=True)
 
-def mostrar_editor(nombre_hoja):
-    st.subheader(f"📋 Gestión de {nombre_hoja}")
-    df = datos[nombre_hoja]
+st.divider()
 
-    if df.empty:
-        st.info("No hay datos registrados todavía.")
-    else:
-        st.dataframe(df, use_container_width=True, hide_index=True)
+st.subheader("➕ Añadir un nuevo dato")
+col1, col2 = st.columns(2)
+with col1:
+    id_parcela = st.text_input("ID Parcela")
+    variedad = st.text_input("Variedad")
+    marco = st.text_input("Marco")
+with col2:
+    nombre = st.text_input("Nombre")
+    hectareas = st.number_input("Hectáreas", min_value=0.0, step=0.1)
+    riego = st.selectbox("Riego", ["sí", "no"])
 
-    st.markdown("---")
-    st.markdown("### ➕ Añadir un nuevo dato")
-    columnas = df.columns.tolist()
-    nuevo = {}
-    cols = st.columns(2)
-    for i, col in enumerate(columnas):
-        nuevo[col] = cols[i % 2].text_input(col, key=f"{nombre_hoja}_{col}")
-
-    if st.button(f"Guardar en {nombre_hoja}", key=f"guardar_{nombre_hoja}"):
-        df_nuevo = pd.DataFrame([nuevo])
-        st.session_state["datos"][nombre_hoja] = pd.concat([df, df_nuevo], ignore_index=True)
-        guardar_datos(st.session_state["datos"])
-        st.success("✅ Guardado correctamente.")
-        st.experimental_rerun()
-
-if menu == "Ver resumen de todo":
-    st.header("📊 Resumen general de la finca")
-    for hoja, df in datos.items():
-        with st.expander(f"📁 {hoja} ({len(df)} registros)"):
-            if df.empty:
-                st.write("No hay datos todavía.")
-            else:
-                st.dataframe(df, use_container_width=True, hide_index=True)
-else:
-    mostrar_editor(menu)
+if st.button("💾 Guardar en Finca"):
+    nuevo_dato = {
+        "ID Parcela": id_parcela,
+        "Nombre": nombre,
+        "Variedad": variedad,
+        "Hectáreas": hectareas,
+        "Marco": marco,
+        "Riego": riego
+    }
+    df = pd.concat([df, pd.DataFrame([nuevo_dato])], ignore_index=True)
+    guardar_datos(df)
+    st.success("✅ Guardado correctamente.")
+    st.experimental_set_query_params(_="refresh")
+    st.rerun()
