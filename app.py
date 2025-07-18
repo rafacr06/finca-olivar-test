@@ -109,6 +109,14 @@ elif menu == "Gastos":
     else:
         df_gastos = st.session_state[HOJA_GASTOS]
 
+    # 1. Historial de gastos
+    st.markdown("### 📊 Historial de gastos")
+    st.dataframe(df_gastos, use_container_width=True)
+
+    total = df_gastos["Importe (€)"].sum()
+    st.markdown(f"**💰 Total acumulado de gastos: {total:.2f} €**")
+
+    # 2. Añadir nuevo gasto
     st.markdown("### ➕ Añadir nuevo gasto")
     fecha = st.date_input("Fecha del gasto")
     categorias = [
@@ -132,17 +140,11 @@ elif menu == "Gastos":
         st.success("✅ Gasto registrado correctamente.")
         st.rerun()
 
-    st.markdown("### 📊 Historial de gastos")
-    st.dataframe(st.session_state[HOJA_GASTOS], use_container_width=True)
-
-    total = st.session_state[HOJA_GASTOS]["Importe (€)"].sum()
-    st.markdown(f"**💰 Total acumulado de gastos: {total:.2f} €**")
-
-    # 🔧 Editar gasto
-    st.markdown("### ✏️ Editar un gasto existente")
+    # 3. Editar gasto
+    st.markdown("### ✏️ Modificar gasto")
     if len(df_gastos) > 0:
         opciones_editables = {f"{i} - {row['Categoría']} / {row['Descripción']}": i for i, row in df_gastos.iterrows()}
-        selected_label_edit = st.selectbox("Selecciona el gasto a editar", list(opciones_editables.keys()), key="editar_gasto")
+        selected_label_edit = st.selectbox("Selecciona el gasto a modificar", list(opciones_editables.keys()), key="editar_gasto")
         index_editar = opciones_editables[selected_label_edit]
         gasto = df_gastos.loc[index_editar]
 
@@ -159,10 +161,10 @@ elif menu == "Gastos":
             st.success("✅ Gasto actualizado.")
             st.rerun()
     else:
-        st.info("No hay gastos para editar.")
+        st.info("No hay gastos para modificar.")
 
-    # ❌ Borrar gasto
-    st.markdown("### ❌ Borrar un gasto")
+    # 4. Borrar gasto
+    st.markdown("### ❌ Borrar gasto")
     if len(df_gastos) > 0:
         opciones_borrables = {f"{i} - {row['Categoría']} / {row['Descripción']}": i for i, row in df_gastos.iterrows()}
         selected_label_del = st.selectbox("Selecciona el gasto a borrar", list(opciones_borrables.keys()), key="borrar_gasto")
@@ -178,3 +180,4 @@ elif menu == "Gastos":
         st.info("No hay gastos para borrar.")
 
     st.session_state[HOJA_GASTOS].to_excel(GASTOS_FILE, sheet_name=HOJA_GASTOS, index=False)
+
