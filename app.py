@@ -168,7 +168,7 @@ elif menu == "Gastos":
         nueva_fecha = st.date_input("Nueva fecha", value=gasto["Fecha"], key="edit_fecha")
         nueva_categoria = st.selectbox("Nueva categoría", categorias, index=categorias.index(gasto["Categoría"]), key="edit_cat")
         nueva_desc = st.text_input("Nueva descripción", value=gasto["Descripción"], key="edit_desc")
-        nuevo_importe = st.number_input("Nuevo importe (€)", min_value=0.0, step=1.0, value=gasto["Importe (€)"], key="edit_imp")
+        nuevo_importe = st.number_input("Nuevo importe (€)", min_value=0.0, step=1.0, value=float(gasto["Importe (€)"]), key="edit_imp")
         nueva_finca = st.selectbox("Nueva finca asociada", nombres_fincas, index=nombres_fincas.index(gasto["Finca asociada"]) if gasto["Finca asociada"] in nombres_fincas else 0, key="edit_finca")
 
         if st.button("✅ Guardar cambios"):
