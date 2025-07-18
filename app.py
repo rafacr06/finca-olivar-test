@@ -4,7 +4,6 @@ import pandas as pd
 from openpyxl import load_workbook
 import os
 
-# Estilo global
 st.set_page_config(page_title="Gestión Finca de Olivar", layout="wide")
 st.markdown("""
 <style>
@@ -20,7 +19,6 @@ st.caption("Diseñada para ser fácil, clara y útil para agricultores")
 
 EXCEL_FILE = "finca_olivar_datos.xlsx"
 
-# Cargar o crear archivo Excel
 def cargar_datos():
     if os.path.exists(EXCEL_FILE):
         return pd.read_excel(EXCEL_FILE, sheet_name=None)
@@ -39,16 +37,22 @@ def guardar_datos(xls):
         for sheet, df in xls.items():
             df.to_excel(writer, sheet_name=sheet, index=False)
 
-# Cargar datos existentes o vacíos
+if "guardado" not in st.session_state:
+    st.session_state["guardado"] = False
+
 datos = cargar_datos()
 
-# Menú lateral simplificado
 menu = st.sidebar.selectbox("📘 ¿Qué quieres gestionar?", list(datos.keys()) + ["Ver resumen de todo"])
 
-# Mostrar datos y editor intuitivo
 def mostrar_editor(nombre_hoja):
     st.subheader(f"📋 Gestión de {nombre_hoja}")
     df = datos[nombre_hoja]
+
+    if st.session_state["guardado"]:
+        datos = cargar_datos()
+        df = datos[nombre_hoja]
+        st.session_state["guardado"] = False
+
     if df.empty:
         st.info("No hay datos registrados todavía.")
     else:
@@ -66,9 +70,9 @@ def mostrar_editor(nombre_hoja):
         datos[nombre_hoja] = pd.concat([df, pd.DataFrame([nuevo])], ignore_index=True)
         guardar_datos(datos)
         st.success("✅ Guardado correctamente.")
+        st.session_state["guardado"] = True
         st.experimental_rerun()
 
-# Mostrar resumen general
 if menu == "Ver resumen de todo":
     st.header("📊 Resumen general de la finca")
     for hoja, df in datos.items():
