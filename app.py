@@ -200,7 +200,7 @@ elif menu == "Gastos":
         st.markdown("### 👀 Detalles actuales del gasto seleccionado")
         st.info(
             f"**🏡 Finca:** {gasto['Finca']}\n\n"
-            f"**📅 Fecha:** {gasto['Fecha']}\n\n"
+            f"**📅 Fecha:** {pd.to_datetime(gasto['Fecha']).strftime('%d/%m/%Y')}\n\n"
             f"**📂 Categoría:** {gasto['Categoría']}\n\n"
             f"**📝 Descripción:** {gasto['Descripción']}\n\n"
             f"**💶 Importe:** {gasto['Importe (€)']} €"
@@ -253,7 +253,7 @@ elif menu == "Gastos":
         st.markdown("### 👀 Detalles del gasto seleccionado")
         st.info(
             f"**🏡 Finca:** {gasto['Finca']}\n\n"
-            f"**📅 Fecha:** {gasto['Fecha']}\n\n"
+            f"**📅 Fecha:** {pd.to_datetime(gasto['Fecha']).strftime('%d/%m/%Y')}\n\n"
             f"**📂 Categoría:** {gasto['Categoría']}\n\n"
             f"**📝 Descripción:** {gasto['Descripción']}\n\n"
             f"**💶 Importe:** {gasto['Importe (€)']} €"
