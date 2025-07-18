@@ -103,20 +103,30 @@ elif menu == "Gastos":
     if HOJA_GASTOS not in st.session_state:
         if os.path.exists(GASTOS_FILE):
             df_gastos = pd.read_excel(GASTOS_FILE, sheet_name=HOJA_GASTOS)
+            if df_gastos.empty:
+                df_gastos = pd.DataFrame([{
+                    "Fecha": pd.Timestamp.now().date(),
+                    "Categoría": "RIEGO",
+                    "Descripción": "Prueba inicial",
+                    "Importe (€)": 150.0
+                }])
         else:
-            df_gastos = pd.DataFrame(columns=["Fecha", "Categoría", "Descripción", "Importe (€)"])
+            df_gastos = pd.DataFrame([{
+                "Fecha": pd.Timestamp.now().date(),
+                "Categoría": "RIEGO",
+                "Descripción": "Prueba inicial",
+                "Importe (€)": 150.0
+            }])
         st.session_state[HOJA_GASTOS] = df_gastos
     else:
         df_gastos = st.session_state[HOJA_GASTOS]
 
-    # 1. Historial de gastos
     st.markdown("### 📊 Historial de gastos")
     st.dataframe(df_gastos, use_container_width=True)
-
     total = df_gastos["Importe (€)"].sum()
     st.markdown(f"**💰 Total acumulado de gastos: {total:.2f} €**")
 
-    # 2. Añadir nuevo gasto
+    # Añadir nuevo gasto
     st.markdown("### ➕ Añadir nuevo gasto")
     fecha = st.date_input("Fecha del gasto")
     categorias = [
@@ -140,7 +150,7 @@ elif menu == "Gastos":
         st.success("✅ Gasto registrado correctamente.")
         st.rerun()
 
-    # 3. Editar gasto
+    # Modificar gasto
     st.markdown("### ✏️ Modificar gasto")
     if len(df_gastos) > 0:
         opciones_editables = {f"{i} - {row['Categoría']} / {row['Descripción']}": i for i, row in df_gastos.iterrows()}
@@ -163,7 +173,7 @@ elif menu == "Gastos":
     else:
         st.info("No hay gastos para modificar.")
 
-    # 4. Borrar gasto
+    # Borrar gasto
     st.markdown("### ❌ Borrar gasto")
     if len(df_gastos) > 0:
         opciones_borrables = {f"{i} - {row['Categoría']} / {row['Descripción']}": i for i, row in df_gastos.iterrows()}
@@ -180,4 +190,3 @@ elif menu == "Gastos":
         st.info("No hay gastos para borrar.")
 
     st.session_state[HOJA_GASTOS].to_excel(GASTOS_FILE, sheet_name=HOJA_GASTOS, index=False)
-
