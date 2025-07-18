@@ -10,6 +10,9 @@ HOJA_FINCA = "Finca"
 if HOJA_FINCA not in st.session_state:
     if os.path.exists(EXCEL_FILE):
         df_finca = pd.read_excel(EXCEL_FILE, sheet_name=HOJA_FINCA)
+        # Asegurar que se use la nueva columna
+        if "Marco" in df_finca.columns:
+            df_finca = df_finca.drop(columns=["Marco"])
     else:
         df_finca = pd.DataFrame(columns=["ID Parcela", "Nombre", "Variedad", "Hectáreas", "Número total de olivos", "Riego"])
     st.session_state[HOJA_FINCA] = df_finca
@@ -42,33 +45,39 @@ if menu == "Finca":
     variedades_disponibles = df_finca["Variedad"].dropna().unique().tolist() or ["Picual", "Arbequina", "Hojiblanca"]
     variedad = st.selectbox("Variedad", opciones := sorted(set(variedades_disponibles)))
     hectareas = st.number_input("Hectáreas", min_value=0.0, step=0.1)
-    marco = st.text_input("Número total de olivos")
+    numero_olivos = st.number_input("Número total de olivos", min_value=0, step=100)
     riego = st.selectbox("Riego", ["sí", "no"])
 
     if st.button("💾 Guardar en Finca"):
-        nuevo = pd.DataFrame([{"ID Parcela": id_parcela, "Nombre": nombre, "Variedad": variedad, "Hectáreas": hectareas, "Número total de olivos": marco, "Riego": riego}])
+        nuevo = pd.DataFrame([{
+            "ID Parcela": id_parcela,
+            "Nombre": nombre,
+            "Variedad": variedad,
+            "Hectáreas": hectareas,
+            "Número total de olivos": numero_olivos,
+            "Riego": riego
+        }])
         st.session_state[HOJA_FINCA] = pd.concat([df_finca, nuevo], ignore_index=True)
         st.session_state.selected_index = None
         st.rerun()
 
-st.markdown("""<hr><h3>🗑️ Borrar un registro</h3>""", unsafe_allow_html=True)
+    st.markdown("""<hr><h3>🗑️ Borrar un registro</h3>""", unsafe_allow_html=True)
 
-if len(df_finca) > 0:
-    # Crear diccionario {nombre: índice}
-    nombres_fincas = df_finca["Nombre"].tolist()
-    indices_fincas = df_finca.index.tolist()
-    nombre_a_indice = {nombre: idx for nombre, idx in zip(nombres_fincas, indices_fincas)}
+    if len(df_finca) > 0:
+        nombres_fincas = df_finca["Nombre"].tolist()
+        indices_fincas = df_finca.index.tolist()
+        nombre_a_indice = {nombre: idx for nombre, idx in zip(nombres_fincas, indices_fincas)}
 
-    # Mostrar nombres en el selectbox
-    selected_nombre = st.selectbox("Selecciona el nombre de la finca a borrar", nombres_fincas, key="nombre_borrar")
+        selected_nombre = st.selectbox("Selecciona el nombre de la finca a borrar", nombres_fincas, key="nombre_borrar")
 
-    if st.button("❌ Borrar registro"):
-        selected_index = nombre_a_indice[selected_nombre]
-        st.session_state[HOJA_FINCA] = df_finca.drop(index=selected_index).reset_index(drop=True)
-        st.session_state.selected_index = None
-        st.rerun()
-else:
-    st.info("No hay registros para borrar.")
+        if st.button("❌ Borrar registro"):
+            selected_index = nombre_a_indice[selected_nombre]
+            st.session_state[HOJA_FINCA] = df_finca.drop(index=selected_index).reset_index(drop=True)
+            st.session_state.selected_index = None
+            st.rerun()
+    else:
+        st.info("No hay registros para borrar.")
 
-    df_finca.to_excel(EXCEL_FILE, sheet_name=HOJA_FINCA, index=False)
+    # Guardar Excel actualizado
+    st.session_state[HOJA_FINCA].to_excel(EXCEL_FILE, sheet_name=HOJA_FINCA, index=False)
 
