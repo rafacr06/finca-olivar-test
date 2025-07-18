@@ -38,7 +38,7 @@ if menu == "Finca":
 
     mostrar_tabla()
 
-    st.markdown("<hr><h3>Agregar nuevo registro</h3>", unsafe_allow_html=True)
+    st.markdown("<hr><h3>➕Agregar nuevo registro</h3>", unsafe_allow_html=True)
 
     id_parcela = len(df_finca) + 1
     nombre = st.text_input("Nombre")
@@ -78,7 +78,7 @@ if menu == "Finca":
         confirmar = st.checkbox("Confirmo que deseo borrar este registro")
 
         if confirmar:
-            if st.button("Borrar registro"):
+            if st.button("🗑️Borrar registro"):
                 selected_index = nombre_a_indice[selected_nombre]
                 st.session_state[HOJA_FINCA] = df_finca.drop(index=selected_index).reset_index(drop=True)
                 st.success(f"Se ha borrado correctamente la finca: {selected_nombre}")
