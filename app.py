@@ -136,20 +136,22 @@ elif menu == "Gastos":
         else:
             df_filtrado = df_gastos.copy()
 
+        # Este dataframe también lo usaremos en modificar y eliminar
+        df_editable = df_filtrado.copy()
+
         # Mostrar tabla
         df_mostrar = df_filtrado.copy()
         df_mostrar["Fecha"] = pd.to_datetime(df_mostrar["Fecha"], errors="coerce").dt.strftime("%d/%m/%Y")
         df_mostrar = df_mostrar[["Finca", "Fecha", "Categoría", "Descripción", "Importe (€)"]]
         st.dataframe(df_mostrar, use_container_width=True)
 
-       # Total por finca o total global con mensaje personalizado
+        # Total por finca o total global con mensaje personalizado
         total = pd.to_numeric(df_filtrado["Importe (€)"], errors="coerce").sum()
-        
         if finca_seleccionada == "Todas las fincas":
             st.markdown(f"<h4>💰 Total de gastos: <b>{total:.2f} €</b></h4>", unsafe_allow_html=True)
         else:
             st.markdown(f"<h4>💰 Total de gastos en la finca <i>{finca_seleccionada}</i>: <b>{total:.2f} €</b></h4>", unsafe_allow_html=True)
-            
+
     st.divider()
 
     # ➕ Añadir nuevo gasto
@@ -185,17 +187,16 @@ elif menu == "Gastos":
     # ✏️ Modificar gasto
     st.markdown("### ✏️ Modificar un gasto existente")
 
-    if not df_gastos.empty:
+    if not df_editable.empty:
         opciones_edit = [
             f"{i} - {row['Finca']} / {row['Categoría']} / {row['Descripción']}"
-            for i, row in df_gastos.iterrows()
+            for i, row in df_editable.iterrows()
         ]
         seleccion = st.selectbox("🔎 Selecciona el gasto a modificar", opciones_edit)
 
         index = int(seleccion.split(" - ")[0])
-        gasto = df_gastos.loc[index]
+        gasto = df_editable.loc[index]
 
-        # 🔎 Mostrar detalles actuales del gasto antes de editar
         st.markdown("### 👀 Detalles actuales del gasto seleccionado")
         st.info(
             f"**🏡 Finca:** {gasto['Finca']}\n\n"
@@ -205,7 +206,6 @@ elif menu == "Gastos":
             f"**💶 Importe:** {gasto['Importe (€)']} €"
         )
 
-        # 📝 Formulario para modificar los datos
         with st.form("form_editar"):
             col1, col2 = st.columns(2)
             with col1:
@@ -231,27 +231,25 @@ elif menu == "Gastos":
             st.success("✅ Gasto modificado correctamente.")
             st.rerun()
     else:
-        st.info("ℹ️ No hay gastos para modificar.")
-        
+        st.info("ℹ️ No hay gastos para modificar en esta finca.")
+
     st.divider()
 
     # ❌ Borrar gasto
     st.markdown("### ❌ Eliminar un gasto")
 
-    if not df_gastos.empty:
+    if not df_editable.empty:
         st.markdown("Selecciona el gasto que deseas eliminar:")
 
-        # Mostrar opciones de forma visual y clara
         opciones_borrar = [
             f"{i} - 🏡 {row['Finca']} / 📅 {row['Fecha']} / 📂 {row['Categoría']} / 📝 {row['Descripción']} / 💶 {row['Importe (€)']}"
-            for i, row in df_gastos.iterrows()
+            for i, row in df_editable.iterrows()
         ]
         seleccion_borrar = st.selectbox("🗑️ Gasto a eliminar", opciones_borrar)
 
         index_borrar = int(seleccion_borrar.split(" - ")[0])
-        gasto = df_gastos.loc[index_borrar]
+        gasto = df_editable.loc[index_borrar]
 
-        # Mostrar los detalles en un recuadro bien visible
         st.markdown("### 👀 Detalles del gasto seleccionado")
         st.info(
             f"**🏡 Finca:** {gasto['Finca']}\n\n"
@@ -271,8 +269,7 @@ elif menu == "Gastos":
         else:
             st.warning("Marca la casilla para poder borrar el gasto.")
     else:
-        st.info("ℹ️ No hay gastos para eliminar.")
-
+        st.info("ℹ️ No hay gastos para eliminar en esta finca.")
 
     # 💾 Guardar el archivo Excel limpio
     st.session_state[HOJA_GASTOS].to_excel(GASTOS_FILE, sheet_name=HOJA_GASTOS, index=False)
