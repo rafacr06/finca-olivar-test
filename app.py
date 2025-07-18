@@ -118,17 +118,32 @@ elif menu == "Gastos":
         "JORNALES RECOGIDA ACEITUNA", "GASTOS EN RECOGIDA", "OTROS"
     ]
 
-    # 📜 Mostrar historial de gastos
+    # 📜 Mostrar historial de gastos con filtro
     st.markdown("### 🧾 Historial de gastos")
+
     if df_gastos.empty:
         st.info("ℹ️ No hay gastos registrados aún.")
     else:
-        df_mostrar = df_gastos.copy()
+        fincas_disponibles = sorted(df_gastos["Finca"].dropna().unique().tolist())
+        finca_seleccionada = st.selectbox(
+            "🏡 Selecciona la finca para ver sus gastos",
+            options=["Todas las fincas"] + fincas_disponibles
+        )
+
+        # Filtrar según finca seleccionada
+        if finca_seleccionada != "Todas las fincas":
+            df_filtrado = df_gastos[df_gastos["Finca"] == finca_seleccionada]
+        else:
+            df_filtrado = df_gastos.copy()
+
+        # Mostrar tabla
+        df_mostrar = df_filtrado.copy()
         df_mostrar["Fecha"] = pd.to_datetime(df_mostrar["Fecha"], errors="coerce").dt.strftime("%d/%m/%Y")
         df_mostrar = df_mostrar[["Finca", "Fecha", "Categoría", "Descripción", "Importe (€)"]]
         st.dataframe(df_mostrar, use_container_width=True)
 
-        total = pd.to_numeric(df_gastos["Importe (€)"], errors="coerce").sum()
+        # Total por finca o total global
+        total = pd.to_numeric(df_filtrado["Importe (€)"], errors="coerce").sum()
         st.markdown(f"<h4>💰 Total de gastos: <b>{total:.2f} €</b></h4>", unsafe_allow_html=True)
 
     st.divider()
@@ -228,4 +243,5 @@ elif menu == "Gastos":
 
     # 💾 Guardar el archivo Excel limpio
     st.session_state[HOJA_GASTOS].to_excel(GASTOS_FILE, sheet_name=HOJA_GASTOS, index=False)
+
 
