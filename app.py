@@ -99,13 +99,13 @@ elif menu == "Gastos":
     GASTOS_FILE = "gastos_olivar.xlsx"
     HOJA_GASTOS = "Gastos"
 
+    # Inicializar df_gastos en session_state
     if HOJA_GASTOS not in st.session_state:
         if os.path.exists(GASTOS_FILE):
             df_gastos = pd.read_excel(GASTOS_FILE, sheet_name=HOJA_GASTOS)
-            columnas_necesarias = ["Finca", "Fecha", "Categoría", "Descripción", "Importe (€)"]
-            for col in columnas_necesarias:
-                if col not in df_gastos.columns:
-                    df_gastos[col] = ""
+            # Eliminar columna antigua si existe
+            if "Finca asociada" in df_gastos.columns:
+                df_gastos.drop(columns=["Finca asociada"], inplace=True)
         else:
             df_gastos = pd.DataFrame(columns=["Finca", "Fecha", "Categoría", "Descripción", "Importe (€)"])
 
@@ -113,17 +113,13 @@ elif menu == "Gastos":
     else:
         df_gastos = st.session_state[HOJA_GASTOS]
 
-    # Limpieza de tipos
-    df_gastos["Fecha"] = pd.to_datetime(df_gastos["Fecha"], errors="coerce")
-    df_gastos["Importe (€)"] = pd.to_numeric(df_gastos["Importe (€)"], errors="coerce")
-
-    # 1️⃣ Historial
+    # Mostrar historial
     st.markdown("### 📊 Historial de gastos")
     st.dataframe(df_gastos, use_container_width=True)
-    total = df_gastos["Importe (€)"].sum(skipna=True)
+    total = pd.to_numeric(df_gastos["Importe (€)"], errors="coerce").sum()
     st.markdown(f"**💰 Total acumulado de gastos: {total:.2f} €**")
 
-    # 2️⃣ Añadir
+    # Añadir nuevo gasto
     st.markdown("### ➕ Añadir nuevo gasto")
     fecha = st.date_input("Fecha del gasto")
     categorias = [
@@ -135,21 +131,24 @@ elif menu == "Gastos":
     categoria = st.selectbox("Tipo de gasto", categorias)
     descripcion = st.text_input("Descripción (opcional)")
     importe = st.number_input("Importe (€)", min_value=0.0, step=1.0)
-    finca_referida = st.selectbox("¿A qué finca corresponde?", df_finca["Nombre"].dropna().unique().tolist())
+    finca_referida = st.selectbox("¿A qué finca corresponde?", df_finca["Nombre"].unique().tolist())
 
     if st.button("💾 Guardar gasto"):
-        nuevo_gasto = pd.DataFrame([{
-            "Finca": finca_referida,
-            "Fecha": fecha,
-            "Categoría": categoria,
-            "Descripción": descripcion,
-            "Importe (€)": importe
-        }])
-        st.session_state[HOJA_GASTOS] = pd.concat([df_gastos, nuevo_gasto], ignore_index=True)
-        st.success("✅ Gasto registrado correctamente.")
-        st.rerun()
+        if not finca_referida:
+            st.warning("⚠️ Debes seleccionar una finca antes de guardar el gasto.")
+        else:
+            nuevo_gasto = pd.DataFrame([{
+                "Finca": finca_referida,
+                "Fecha": fecha,
+                "Categoría": categoria,
+                "Descripción": descripcion,
+                "Importe (€)": importe
+            }])
+            st.session_state[HOJA_GASTOS] = pd.concat([df_gastos, nuevo_gasto], ignore_index=True)
+            st.success("✅ Gasto registrado correctamente.")
+            st.rerun()
 
-    # 3️⃣ Modificar
+    # Modificar gasto
     st.markdown("### ✏️ Modificar gasto")
     if len(df_gastos) > 0:
         opciones_editables = {
@@ -163,8 +162,8 @@ elif menu == "Gastos":
         nueva_fecha = st.date_input("Nueva fecha", value=pd.to_datetime(gasto["Fecha"]), key="edit_fecha")
         nueva_categoria = st.selectbox("Nueva categoría", categorias, index=categorias.index(gasto["Categoría"]), key="edit_cat")
         nueva_desc = st.text_input("Nueva descripción", value=gasto["Descripción"], key="edit_desc")
-        nuevo_importe = st.number_input("Nuevo importe (€)", min_value=0.0, step=1.0, value=float(gasto["Importe (€)"] or 0.0), key="edit_imp")
-        nueva_finca = st.selectbox("Nueva finca", df_finca["Nombre"].dropna().unique().tolist(), index=0, key="edit_finca")
+        nuevo_importe = st.number_input("Nuevo importe (€)", min_value=0.0, step=1.0, value=float(gasto["Importe (€)"]), key="edit_imp")
+        nueva_finca = st.selectbox("Nueva finca", df_finca["Nombre"].unique().tolist(), index=0, key="edit_finca")
 
         if st.button("✅ Guardar cambios"):
             st.session_state[HOJA_GASTOS].at[index_editar, "Fecha"] = nueva_fecha
@@ -177,7 +176,7 @@ elif menu == "Gastos":
     else:
         st.info("No hay gastos para modificar.")
 
-    # 4️⃣ Borrar
+    # Borrar gasto
     st.markdown("### ❌ Borrar gasto")
     if len(df_gastos) > 0:
         opciones_borrables = {
@@ -196,7 +195,7 @@ elif menu == "Gastos":
     else:
         st.info("No hay gastos para borrar.")
 
-    # Guardar Excel actualizado
+    # Guardar Excel limpio y sin columnas duplicadas
     st.session_state[HOJA_GASTOS].to_excel(GASTOS_FILE, sheet_name=HOJA_GASTOS, index=False)
 
 
