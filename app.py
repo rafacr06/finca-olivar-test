@@ -224,26 +224,42 @@ elif menu == "Gastos":
 
     st.divider()
 
-    # ❌ Borrar gasto
+     # ❌ Borrar gasto
     st.markdown("### ❌ Eliminar un gasto")
 
     if not df_gastos.empty:
+        st.markdown("Selecciona el gasto que deseas eliminar:")
+
+        # Lista con descripción clara
         opciones_borrar = [
-            f"{i} - {row['Finca']} / {row['Categoría']} / {row['Descripción']}"
+            f"{i} - 🏡 {row['Finca']} / 📅 {row['Fecha']} / 📂 {row['Categoría']} / 📝 {row['Descripción']} / 💶 {row['Importe (€)']}"
             for i, row in df_gastos.iterrows()
         ]
-        seleccion_borrar = st.selectbox("🗑️ Selecciona el gasto a borrar", opciones_borrar)
-        index_borrar = int(seleccion_borrar.split(" - ")[0])
+        seleccion_borrar = st.selectbox("🗑️ Gasto a eliminar", opciones_borrar)
 
-        confirmar = st.checkbox("☑️ Confirmo que deseo borrar este gasto", key="confirma_borrado")
+        index_borrar = int(seleccion_borrar.split(" - ")[0])
+        gasto_a_borrar = df_gastos.loc[index_borrar]
+
+        st.markdown("### ⚠️ Confirmación")
+        with st.expander("Ver detalles del gasto seleccionado"):
+            st.write(f"**Finca:** {gasto_a_borrar['Finca']}")
+            st.write(f"**Fecha:** {gasto_a_borrar['Fecha']}")
+            st.write(f"**Categoría:** {gasto_a_borrar['Categoría']}")
+            st.write(f"**Descripción:** {gasto_a_borrar['Descripción']}")
+            st.write(f"**Importe:** {gasto_a_borrar['Importe (€)']} €")
+
+        confirmar = st.checkbox("☑️ Confirmo que deseo eliminar este gasto")
 
         if confirmar:
-            if st.button("❌ Borrar gasto"):
+            if st.button("❌ Borrar definitivamente"):
                 st.session_state[HOJA_GASTOS] = df_gastos.drop(index=index_borrar).reset_index(drop=True)
-                st.success("✅ Gasto borrado.")
+                st.success("✅ Gasto eliminado correctamente.")
                 st.rerun()
+        else:
+            st.warning("Marca la casilla para poder borrar el gasto.")
     else:
         st.info("ℹ️ No hay gastos para eliminar.")
+
 
     # 💾 Guardar el archivo Excel limpio
     st.session_state[HOJA_GASTOS].to_excel(GASTOS_FILE, sheet_name=HOJA_GASTOS, index=False)
