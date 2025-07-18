@@ -78,7 +78,7 @@ if menu == "Finca":
         confirmar = st.checkbox("Confirmo que deseo borrar este registro")
 
         if confirmar:
-            if st.button("🗑❌Borrar registro"):
+            if st.button("❌Borrar registro"):
                 selected_index = nombre_a_indice[selected_nombre]
                 st.session_state[HOJA_FINCA] = df_finca.drop(index=selected_index).reset_index(drop=True)
                 st.success(f"Se ha borrado correctamente la finca: {selected_nombre}")
