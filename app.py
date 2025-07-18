@@ -51,16 +51,24 @@ if menu == "Finca":
         st.session_state.selected_index = None
         st.rerun()
 
-    st.markdown("""<hr><h3>🗑️ Borrar un registro</h3>""", unsafe_allow_html=True)
+st.markdown("""<hr><h3>🗑️ Borrar un registro</h3>""", unsafe_allow_html=True)
 
-    if len(df_finca) > 0:
-        selected_index = st.selectbox("Selecciona el número de índice a borrar", df_finca.index, key="indice_borrar")
-        if st.button("❌ Borrar registro"):
-            st.session_state[HOJA_FINCA] = df_finca.drop(index=selected_index).reset_index(drop=True)
-            st.session_state.selected_index = None
-            st.rerun()
-    else:
-        st.info("No hay registros para borrar.")
+if len(df_finca) > 0:
+    # Crear diccionario {nombre: índice}
+    nombres_fincas = df_finca["Nombre"].tolist()
+    indices_fincas = df_finca.index.tolist()
+    nombre_a_indice = {nombre: idx for nombre, idx in zip(nombres_fincas, indices_fincas)}
+
+    # Mostrar nombres en el selectbox
+    selected_nombre = st.selectbox("Selecciona el nombre de la finca a borrar", nombres_fincas, key="nombre_borrar")
+
+    if st.button("❌ Borrar registro"):
+        selected_index = nombre_a_indice[selected_nombre]
+        st.session_state[HOJA_FINCA] = df_finca.drop(index=selected_index).reset_index(drop=True)
+        st.session_state.selected_index = None
+        st.rerun()
+else:
+    st.info("No hay registros para borrar.")
 
     df_finca.to_excel(EXCEL_FILE, sheet_name=HOJA_FINCA, index=False)
 
