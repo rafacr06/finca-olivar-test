@@ -124,13 +124,8 @@ elif menu == "Gastos":
 
     st.dataframe(df_mostrar, use_container_width=True)
 
-     total = pd.to_numeric(df_gastos["Importe (€)"], errors="coerce").sum()
-    st.markdown(f"""
-        <div style='font-size: 26px; font-weight: bold; color: gold; margin-top: 20px;'>
-            💰 Total acumulado de gastos: {total:.2f} €
-        </div>
-    """, unsafe_allow_html=True)
-
+    total = pd.to_numeric(df_gastos["Importe (€)"], errors="coerce").sum()
+    st.markdown(f"💰 <b>Total acumulado de gastos: {total:.2f} €</b>", unsafe_allow_html=True)
 
     # ➕ Añadir gasto
     st.markdown("### ➕ Añadir nuevo gasto")
