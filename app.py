@@ -27,7 +27,7 @@ st.markdown("""
 menu = st.sidebar.radio("📋 ¿Qué quieres gestionar?", [
     "Finca", "Gastos", "Jornales", "Ingresos", "Abonos y Tratamientos", "Rentabilidad", "Ver resumen de todo"
 ])
-
+# Menu Finca
 if menu == "Finca":
     st.subheader("📋 Gestión de Finca")
 
@@ -91,4 +91,89 @@ if menu == "Finca":
 
     # Guardar Excel actualizado
     st.session_state[HOJA_FINCA].to_excel(EXCEL_FILE, sheet_name=HOJA_FINCA, index=False)
+    
+# Menu Gastos
+elif menu == "Gastos":
+    st.subheader("💸 Registro de Gastos de la Finca")
+
+    st.markdown("Introduce los siguientes gastos relacionados con la finca. Usa solo los campos necesarios.")
+
+    GASTOS_FILE = "gastos_olivar.xlsx"
+    HOJA_GASTOS = "Gastos"
+
+    if HOJA_GASTOS not in st.session_state:
+        if os.path.exists(GASTOS_FILE):
+            df_gastos = pd.read_excel(GASTOS_FILE, sheet_name=HOJA_GASTOS)
+        else:
+            df_gastos = pd.DataFrame(columns=["Fecha", "Categoría", "Descripción", "Importe (€)"])
+        st.session_state[HOJA_GASTOS] = df_gastos
+    else:
+        df_gastos = st.session_state[HOJA_GASTOS]
+
+    st.markdown("### ➕ Añadir nuevo gasto")
+    fecha = st.date_input("Fecha del gasto")
+    categorias = [
+        "GASÓLEOS Y ACEITES",
+        "TALLERES / REPARACIONES",
+        "MANTENIMIENTOS MAQUINARIA",
+        "PRODUCTOS FITOSANITARIOS",
+        "SEGUROS VEHÍCULOS",
+        "IMPUESTOS HACIENDA",
+        "SEGUROS SOCIALES",
+        "RIEGO",
+        "JORNALES MANTENIMIENTO FINCA",
+        "JORNALES RECOGIDA ACEITUNA",
+        "GASTOS EN RECOGIDA",
+        "OTROS"
+    ]
+    categoria = st.selectbox("Tipo de gasto", categorias)
+    descripcion = st.text_input("Descripción (opcional)")
+    importe = st.number_input("Importe (€)", min_value=0.0, step=1.0)
+
+    if st.button("💾 Guardar gasto"):
+        nuevo_gasto = pd.DataFrame([{
+            "Fecha": fecha,
+            "Categoría": categoria,
+            "Descripción": descripcion,
+            "Importe (€)": importe
+        }])
+        st.session_state[HOJA_GASTOS] = pd.concat([df_gastos, nuevo_gasto], ignore_index=True)
+        st.success("✅ Gasto registrado correctamente.")
+        st.rerun()
+
+    st.markdown("### 📊 Historial de gastos")
+    st.dataframe(st.session_state[HOJA_GASTOS], use_container_width=True)
+
+    total = st.session_state[HOJA_GASTOS]["Importe (€)"].sum()
+    st.markdown(f"**💰 Total acumulado de gastos: {total:.2f} €**")
+
+    st.markdown("### 📝 Editar o borrar gastos")
+    if len(st.session_state[HOJA_GASTOS]) > 0:
+        index_editar = st.selectbox("Selecciona el índice del gasto a editar/borrar", st.session_state[HOJA_GASTOS].index.tolist(), key="editar_borrar")
+
+        gasto = st.session_state[HOJA_GASTOS].iloc[index_editar]
+
+        with st.expander("✏️ Editar gasto seleccionado"):
+            nueva_fecha = st.date_input("Nueva fecha", value=gasto["Fecha"], key="edit_fecha")
+            nueva_categoria = st.selectbox("Nueva categoría", categorias, index=categorias.index(gasto["Categoría"]), key="edit_cat")
+            nueva_desc = st.text_input("Nueva descripción", value=gasto["Descripción"], key="edit_desc")
+            nuevo_importe = st.number_input("Nuevo importe (€)", min_value=0.0, step=1.0, value=gasto["Importe (€)"], key="edit_imp")
+
+            if st.button("✅ Guardar cambios"):
+                st.session_state[HOJA_GASTOS].at[index_editar, "Fecha"] = nueva_fecha
+                st.session_state[HOJA_GASTOS].at[index_editar, "Categoría"] = nueva_categoria
+                st.session_state[HOJA_GASTOS].at[index_editar, "Descripción"] = nueva_desc
+                st.session_state[HOJA_GASTOS].at[index_editar, "Importe (€)"] = nuevo_importe
+                st.success("Gasto actualizado.")
+                st.rerun()
+
+        if st.checkbox("⚠️ Confirmo que quiero borrar este gasto", key="conf_borrar"):
+            if st.button("❌ Borrar gasto"):
+                st.session_state[HOJA_GASTOS] = st.session_state[HOJA_GASTOS].drop(index=index_editar).reset_index(drop=True)
+                st.success("Gasto eliminado correctamente.")
+                st.rerun()
+    else:
+        st.info("No hay gastos registrados para editar o borrar.")
+
+    st.session_state[HOJA_GASTOS].to_excel(GASTOS_FILE, sheet_name=HOJA_GASTOS, index=False)
 
