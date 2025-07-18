@@ -25,7 +25,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 menu = st.sidebar.radio("📋 ¿Qué quieres gestionar?", [
-    "Finca", "Labores", "Costes", "Ingresos", "Inventario", "Rentabilidad", "Ver resumen de todo"
+    "Finca", "Gastos", "Jornales", "Ingresos", "Abonos y Tratamientos", "Rentabilidad", "Ver resumen de todo"
 ])
 
 if menu == "Finca":
