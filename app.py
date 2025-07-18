@@ -108,14 +108,16 @@ elif menu == "Gastos":
                     "Fecha": pd.Timestamp.now().date(),
                     "Categoría": "RIEGO",
                     "Descripción": "Prueba inicial",
-                    "Importe (€)": 150.0
+                    "Importe (€)": 150.0,
+                    "Finca asociada": "Sin definir"
                 }])
         else:
             df_gastos = pd.DataFrame([{
                 "Fecha": pd.Timestamp.now().date(),
                 "Categoría": "RIEGO",
                 "Descripción": "Prueba inicial",
-                "Importe (€)": 150.0
+                "Importe (€)": 150.0,
+                "Finca asociada": "Sin definir"
             }])
         st.session_state[HOJA_GASTOS] = df_gastos
     else:
@@ -139,12 +141,17 @@ elif menu == "Gastos":
     descripcion = st.text_input("Descripción (opcional)")
     importe = st.number_input("Importe (€)", min_value=0.0, step=1.0)
 
+    # Nuevo: selección de finca asociada
+    nombres_fincas = df_finca["Nombre"].dropna().unique().tolist()
+    finca_asociada = st.selectbox("Selecciona la finca asociada", nombres_fincas)
+
     if st.button("💾 Guardar gasto"):
         nuevo_gasto = pd.DataFrame([{
             "Fecha": fecha,
             "Categoría": categoria,
             "Descripción": descripcion,
-            "Importe (€)": importe
+            "Importe (€)": importe,
+            "Finca asociada": finca_asociada
         }])
         st.session_state[HOJA_GASTOS] = pd.concat([df_gastos, nuevo_gasto], ignore_index=True)
         st.success("✅ Gasto registrado correctamente.")
@@ -162,12 +169,14 @@ elif menu == "Gastos":
         nueva_categoria = st.selectbox("Nueva categoría", categorias, index=categorias.index(gasto["Categoría"]), key="edit_cat")
         nueva_desc = st.text_input("Nueva descripción", value=gasto["Descripción"], key="edit_desc")
         nuevo_importe = st.number_input("Nuevo importe (€)", min_value=0.0, step=1.0, value=gasto["Importe (€)"], key="edit_imp")
+        nueva_finca = st.selectbox("Nueva finca asociada", nombres_fincas, index=nombres_fincas.index(gasto["Finca asociada"]) if gasto["Finca asociada"] in nombres_fincas else 0, key="edit_finca")
 
         if st.button("✅ Guardar cambios"):
             st.session_state[HOJA_GASTOS].at[index_editar, "Fecha"] = nueva_fecha
             st.session_state[HOJA_GASTOS].at[index_editar, "Categoría"] = nueva_categoria
             st.session_state[HOJA_GASTOS].at[index_editar, "Descripción"] = nueva_desc
             st.session_state[HOJA_GASTOS].at[index_editar, "Importe (€)"] = nuevo_importe
+            st.session_state[HOJA_GASTOS].at[index_editar, "Finca asociada"] = nueva_finca
             st.success("✅ Gasto actualizado.")
             st.rerun()
     else:
