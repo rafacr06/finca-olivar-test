@@ -203,5 +203,6 @@ elif menu == "Gastos":
         st.info("ℹ️ No hay gastos para borrar.")
 
     # Guardar Excel limpio
-    st.session_state[HOJA_GASTOS].to_excel(GAST]()_
+# Guardar Excel limpio
+st.session_state[HOJA_GASTOS].to_excel(GASTOS_FILE, sheet_name=HOJA_GASTOS, index=False)
 
