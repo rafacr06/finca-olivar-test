@@ -20,7 +20,7 @@ else:
     df_finca = st.session_state[HOJA_FINCA]
 
 st.markdown("""
-    <h1>🌿 Aplicación sencilla para gestionar tu finca de olivar</h1>
+    <h1>🌿Gestion de fincas del olivar🌿</h1>
     <p style='color:gray;'>Diseñada para ser fácil, clara y útil para agricultores</p>
 """, unsafe_allow_html=True)
 
@@ -85,7 +85,7 @@ if menu == "Finca":
                 st.session_state.selected_index = None
                 st.rerun()
         else:
-            st.info("Marca la casilla de confirmación antes de borrar.❌")
+            st.info("Marca la casilla de confirmación antes de borrar.")
     else:
         st.info("No hay registros para borrar.")
 
