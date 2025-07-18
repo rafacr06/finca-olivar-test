@@ -142,10 +142,14 @@ elif menu == "Gastos":
         df_mostrar = df_mostrar[["Finca", "Fecha", "Categoría", "Descripción", "Importe (€)"]]
         st.dataframe(df_mostrar, use_container_width=True)
 
-        # Total por finca o total global
+       # Total por finca o total global con mensaje personalizado
         total = pd.to_numeric(df_filtrado["Importe (€)"], errors="coerce").sum()
-        st.markdown(f"<h4>💰 Total de gastos: <b>{total:.2f} €</b></h4>", unsafe_allow_html=True)
-
+        
+        if finca_seleccionada == "Todas las fincas":
+            st.markdown(f"<h4>💰 Total de gastos: <b>{total:.2f} €</b></h4>", unsafe_allow_html=True)
+        else:
+            st.markdown(f"<h4>💰 Total de gastos en la finca <i>{finca_seleccionada}</i>: <b>{total:.2f} €</b></h4>", unsafe_allow_html=True)
+            
     st.divider()
 
     # ➕ Añadir nuevo gasto
