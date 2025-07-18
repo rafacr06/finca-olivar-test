@@ -27,33 +27,43 @@ st.markdown("""
 menu = st.sidebar.radio("📋 ¿Qué quieres gestionar?", [
     "Finca", "Gastos", "Jornales", "Ingresos", "Abonos y Tratamientos", "Rentabilidad", "Ver resumen de todo"
 ])
-# **********************************************Menu Finca*************************************************************
-if menu == "Finca":
-    st.subheader("📋 Gestión de Finca")
+#**********************************************************************************************************   
+# **********************************************Menu Finca*************************************************
+#**********************************************************************************************************   
+elif menu == "Finca":
+    st.markdown("<h2>🏡 Gestión de Fincas</h2>", unsafe_allow_html=True)
 
     selected_index = st.session_state.get("selected_index", None)
 
-    def mostrar_tabla():
-        st.dataframe(df_finca, use_container_width=True)
+    # 🔍 Mostrar tabla actual
+    st.markdown("### 📋 Lista de fincas registradas")
+    st.dataframe(df_finca, use_container_width=True)
 
-    mostrar_tabla()
+    st.divider()
 
-    st.markdown("<hr><h3>➕Agregar nuevo registro</h3>", unsafe_allow_html=True)
+    # ➕ Agregar nueva finca
+    st.markdown("### ➕ Añadir nueva finca")
 
-    id_parcela = len(df_finca) + 1
-    nombre = st.text_input("Nombre")
+    with st.form("form_nueva_finca"):
+        id_parcela = len(df_finca) + 1
 
-    # Lista de variedades ampliada
-    variedades_base = ["Picual", "Arbequina", "Hojiblanca", "Cornicabra", "Manzanilla", "Verdial", "Empeltre", "Lechín", "Changlot Real", "Blanqueta", "Farga", "Royal", "Cuquillo"]
-    variedades_existentes = df_finca["Variedad"].dropna().unique().tolist()
-    variedades_disponibles = sorted(set(variedades_base + variedades_existentes))
+        nombre = st.text_input("🏷️ Nombre de la finca")
 
-    variedad = st.selectbox("Variedad", variedades_disponibles)
-    hectareas = st.number_input("Hectáreas", min_value=0.0, step=0.1)
-    numero_olivos = st.number_input("Número total de olivos", min_value=0, step=100)
-    riego = st.selectbox("Riego", ["sí", "no"])
+        variedades_base = [
+            "Picual", "Arbequina", "Hojiblanca", "Cornicabra", "Manzanilla", "Verdial",
+            "Empeltre", "Lechín", "Changlot Real", "Blanqueta", "Farga", "Royal", "Cuquillo"
+        ]
+        variedades_existentes = df_finca["Variedad"].dropna().unique().tolist()
+        variedades_disponibles = sorted(set(variedades_base + variedades_existentes))
 
-    if st.button("Guardar en Finca"):
+        variedad = st.selectbox("🌱 Variedad del olivo", variedades_disponibles)
+        hectareas = st.number_input("🌾 Superficie en hectáreas", min_value=0.0, step=0.1)
+        numero_olivos = st.number_input("🌳 Número total de olivos", min_value=0, step=100)
+        riego = st.selectbox("🚿 ¿Tiene riego?", ["sí", "no"])
+
+        guardar = st.form_submit_button("💾 Guardar finca")
+
+    if guardar:
         nuevo = pd.DataFrame([{
             "ID Parcela": id_parcela,
             "Nombre": nombre,
@@ -63,34 +73,50 @@ if menu == "Finca":
             "Riego": riego
         }])
         st.session_state[HOJA_FINCA] = pd.concat([df_finca, nuevo], ignore_index=True)
+        st.success(f"✅ Finca '{nombre}' registrada correctamente.")
         st.session_state.selected_index = None
         st.rerun()
 
-    st.markdown("<hr><h3>❌Borrar un registro</h3>", unsafe_allow_html=True)
+    st.divider()
+
+    # ❌ Eliminar finca
+    st.markdown("### ❌ Eliminar una finca registrada")
 
     if len(df_finca) > 0:
         nombres_fincas = df_finca["Nombre"].tolist()
         indices_fincas = df_finca.index.tolist()
         nombre_a_indice = {nombre: idx for nombre, idx in zip(nombres_fincas, indices_fincas)}
 
-        selected_nombre = st.selectbox("Selecciona el nombre de la finca a borrar", nombres_fincas, key="nombre_borrar")
+        selected_nombre = st.selectbox("🗑️ Selecciona la finca que deseas eliminar", nombres_fincas, key="nombre_borrar")
 
-        confirmar = st.checkbox("⚠️Confirmo que deseo borrar este registro")
+        # Mostrar detalles de la finca antes de eliminar
+        finca_info = df_finca.loc[nombre_a_indice[selected_nombre]]
+        st.markdown("### 👀 Detalles de la finca seleccionada")
+        st.info(
+            f"**🏷️ Nombre:** {finca_info['Nombre']}\n\n"
+            f"**🌱 Variedad:** {finca_info['Variedad']}\n\n"
+            f"**🌾 Hectáreas:** {finca_info['Hectáreas']}\n\n"
+            f"**🌳 Número de olivos:** {finca_info['Número total de olivos']}\n\n"
+            f"**🚿 Riego:** {finca_info['Riego']}"
+        )
+
+        confirmar = st.checkbox("⚠️ Confirmo que deseo eliminar esta finca", key="confirma_borrar_finca")
 
         if confirmar:
-            if st.button("❌Borrar registro"):
+            if st.button("❌ Borrar finca"):
                 selected_index = nombre_a_indice[selected_nombre]
                 st.session_state[HOJA_FINCA] = df_finca.drop(index=selected_index).reset_index(drop=True)
-                st.success(f"Se ha borrado correctamente la finca: {selected_nombre}")
+                st.success(f"✅ Finca '{selected_nombre}' eliminada correctamente.")
                 st.session_state.selected_index = None
                 st.rerun()
         else:
-            st.info("Marca la casilla de confirmación antes de borrar.")
+            st.info("Marca la casilla de confirmación antes de poder eliminar.")
     else:
-        st.info("No hay registros para borrar.")
+        st.info("ℹ️ No hay fincas registradas para eliminar.")
 
-    # Guardar Excel actualizado
+    # 💾 Guardar Excel actualizado
     st.session_state[HOJA_FINCA].to_excel(EXCEL_FILE, sheet_name=HOJA_FINCA, index=False)
+
 #**********************************************************************************************************    
 #**********************************************Menu Gastos*************************************************
 #**********************************************************************************************************  
