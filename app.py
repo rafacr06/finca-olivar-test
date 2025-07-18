@@ -37,21 +37,16 @@ def guardar_datos(xls):
         for sheet, df in xls.items():
             df.to_excel(writer, sheet_name=sheet, index=False)
 
-if "guardado" not in st.session_state:
-    st.session_state["guardado"] = False
+if "datos" not in st.session_state:
+    st.session_state["datos"] = cargar_datos()
 
-datos = cargar_datos()
+datos = st.session_state["datos"]
 
 menu = st.sidebar.selectbox("📘 ¿Qué quieres gestionar?", list(datos.keys()) + ["Ver resumen de todo"])
 
 def mostrar_editor(nombre_hoja):
     st.subheader(f"📋 Gestión de {nombre_hoja}")
     df = datos[nombre_hoja]
-
-    if st.session_state["guardado"]:
-        datos = cargar_datos()
-        df = datos[nombre_hoja]
-        st.session_state["guardado"] = False
 
     if df.empty:
         st.info("No hay datos registrados todavía.")
@@ -67,10 +62,10 @@ def mostrar_editor(nombre_hoja):
         nuevo[col] = cols[i % 2].text_input(col, key=f"{nombre_hoja}_{col}")
 
     if st.button(f"Guardar en {nombre_hoja}", key=f"guardar_{nombre_hoja}"):
-        datos[nombre_hoja] = pd.concat([df, pd.DataFrame([nuevo])], ignore_index=True)
-        guardar_datos(datos)
+        df_nuevo = pd.DataFrame([nuevo])
+        st.session_state["datos"][nombre_hoja] = pd.concat([df, df_nuevo], ignore_index=True)
+        guardar_datos(st.session_state["datos"])
         st.success("✅ Guardado correctamente.")
-        st.session_state["guardado"] = True
         st.experimental_rerun()
 
 if menu == "Ver resumen de todo":
