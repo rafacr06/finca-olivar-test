@@ -224,13 +224,13 @@ elif menu == "Gastos":
 
     st.divider()
 
-     # ❌ Borrar gasto
+    # ❌ Borrar gasto
     st.markdown("### ❌ Eliminar un gasto")
 
     if not df_gastos.empty:
         st.markdown("Selecciona el gasto que deseas eliminar:")
 
-        # Lista con descripción clara
+        # Mostrar opciones de forma visual y clara
         opciones_borrar = [
             f"{i} - 🏡 {row['Finca']} / 📅 {row['Fecha']} / 📂 {row['Categoría']} / 📝 {row['Descripción']} / 💶 {row['Importe (€)']}"
             for i, row in df_gastos.iterrows()
@@ -238,15 +238,17 @@ elif menu == "Gastos":
         seleccion_borrar = st.selectbox("🗑️ Gasto a eliminar", opciones_borrar)
 
         index_borrar = int(seleccion_borrar.split(" - ")[0])
-        gasto_a_borrar = df_gastos.loc[index_borrar]
+        gasto = df_gastos.loc[index_borrar]
 
-        st.markdown("### ⚠️ Confirmación")
-        with st.expander("Ver detalles del gasto seleccionado"):
-            st.write(f"**Finca:** {gasto_a_borrar['Finca']}")
-            st.write(f"**Fecha:** {gasto_a_borrar['Fecha']}")
-            st.write(f"**Categoría:** {gasto_a_borrar['Categoría']}")
-            st.write(f"**Descripción:** {gasto_a_borrar['Descripción']}")
-            st.write(f"**Importe:** {gasto_a_borrar['Importe (€)']} €")
+        # Mostrar los detalles en un recuadro bien visible
+        st.markdown("### 👀 Detalles del gasto seleccionado")
+        st.info(
+            f"**🏡 Finca:** {gasto['Finca']}\n\n"
+            f"**📅 Fecha:** {gasto['Fecha']}\n\n"
+            f"**📂 Categoría:** {gasto['Categoría']}\n\n"
+            f"**📝 Descripción:** {gasto['Descripción']}\n\n"
+            f"**💶 Importe:** {gasto['Importe (€)']} €"
+        )
 
         confirmar = st.checkbox("☑️ Confirmo que deseo eliminar este gasto")
 
