@@ -113,7 +113,7 @@ elif menu == "Gastos":
     else:
         df_gastos = st.session_state[HOJA_GASTOS]
 
-    # Asegurar tipos correctos
+    # Limpieza de tipos
     df_gastos["Fecha"] = pd.to_datetime(df_gastos["Fecha"], errors="coerce")
     df_gastos["Importe (€)"] = pd.to_numeric(df_gastos["Importe (€)"], errors="coerce")
 
@@ -198,4 +198,5 @@ elif menu == "Gastos":
 
     # Guardar Excel actualizado
     st.session_state[HOJA_GASTOS].to_excel(GASTOS_FILE, sheet_name=HOJA_GASTOS, index=False)
+
 
