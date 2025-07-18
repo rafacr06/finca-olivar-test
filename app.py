@@ -72,15 +72,20 @@ if menu == "Finca":
         indices_fincas = df_finca.index.tolist()
         nombre_a_indice = {nombre: idx for nombre, idx in zip(nombres_fincas, indices_fincas)}
 
-        selected_nombre = st.selectbox("Selecciona el nombre de la finca a borrar", nombres_fincas, key="nombre_borrar")
-
+     selected_nombre = st.selectbox("Selecciona el nombre de la finca a borrar", nombres_fincas, key="nombre_borrar")
+    
+    # Paso de confirmación
+    confirmar = st.checkbox("✅ Confirmo que deseo borrar este registro")
+    
+    if confirmar:
         if st.button("❌ Borrar registro"):
             selected_index = nombre_a_indice[selected_nombre]
             st.session_state[HOJA_FINCA] = df_finca.drop(index=selected_index).reset_index(drop=True)
+            st.success(f"Se ha borrado correctamente la finca: {selected_nombre}")
             st.session_state.selected_index = None
             st.rerun()
     else:
-        st.info("No hay registros para borrar.")
+        st.info("Marca la casilla de confirmación antes de borrar.")
 
     # Guardar Excel actualizado
     st.session_state[HOJA_FINCA].to_excel(EXCEL_FILE, sheet_name=HOJA_FINCA, index=False)
