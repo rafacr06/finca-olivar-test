@@ -66,7 +66,7 @@ if menu == "Finca":
         st.session_state.selected_index = None
         st.rerun()
 
-    st.markdown("<hr><h3>Borrar un registro</h3>", unsafe_allow_html=True)
+    st.markdown("<hr><h3>❌Borrar un registro</h3>", unsafe_allow_html=True)
 
     if len(df_finca) > 0:
         nombres_fincas = df_finca["Nombre"].tolist()
@@ -75,7 +75,7 @@ if menu == "Finca":
 
         selected_nombre = st.selectbox("Selecciona el nombre de la finca a borrar", nombres_fincas, key="nombre_borrar")
 
-        confirmar = st.checkbox("Confirmo que deseo borrar este registro")
+        confirmar = st.checkbox("⚠️Confirmo que deseo borrar este registro")
 
         if confirmar:
             if st.button("❌Borrar registro"):
