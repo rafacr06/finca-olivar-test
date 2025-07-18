@@ -189,9 +189,10 @@ elif menu == "Gastos":
 
     if not df_editable.empty:
         opciones_edit = [
-            f"{i} - {row['Finca']} / {row['Categoría']} / {row['Descripción']}"
+         f"{i} - 🏡 {row['Finca']} / 📅 {pd.to_datetime(row['Fecha']).strftime('%d/%m/%Y')} / 📂 {row['Categoría']} / 📝 {row['Descripción']} / 💶 {row['Importe (€)']}"
             for i, row in df_editable.iterrows()
         ]
+
         seleccion = st.selectbox("🔎 Selecciona el gasto a modificar", opciones_edit)
 
         index = int(seleccion.split(" - ")[0])
