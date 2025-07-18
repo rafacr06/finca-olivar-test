@@ -1,98 +1,93 @@
 import streamlit as st
 import pandas as pd
 import os
+from io import BytesIO
+import openpyxl
 
-# Ruta al archivo Excel
-data_file = "finca_olivar_datos.xlsx"
+st.set_page_config(page_title="Gestión de Finca de Olivar", layout="wide")
 
-# Inicializa el archivo si no existe
-if not os.path.exists(data_file):
-    with pd.ExcelWriter(data_file, engine='openpyxl') as writer:
-        pd.DataFrame(columns=["ID Parcela", "Nombre", "Variedad", "Hectáreas", "Olivos", "Riego"]).to_excel(writer, sheet_name="Finca", index=False)
+ARCHIVO_EXCEL = "finca_olivar_datos.xlsx"
 
-# Cargar los datos
-def cargar_datos():
-    return pd.read_excel(data_file, sheet_name="Finca")
+SECCIONES = ["Finca", "Labores", "Costes", "Ingresos", "Inventario", "Rentabilidad", "Resumen"]
 
-# Guardar los datos
-def guardar_datos(df):
-    with pd.ExcelWriter(data_file, engine='openpyxl', mode='w') as writer:
-        df.to_excel(writer, sheet_name="Finca", index=False)
-
-# Borrar registro por índice
-def borrar_registro(indice):
-    df = cargar_datos()
-    df = df.drop(index=indice).reset_index(drop=True)
-    guardar_datos(df)
-    st.success("Registro eliminado correctamente")
-
-# Interfaz
-st.set_page_config(page_title="Finca Olivar", layout="wide")
-st.title("🌿 Aplicación sencilla para gestionar tu finca de olivar")
-st.caption("Diseñada para ser fácil, clara y útil para agricultoresv.01")
-
-# Secciones (no desplegable)
-menu = st.sidebar.radio("📍 ¿Qué quieres gestionar?", ["Finca", "Labores", "Costes", "Ingresos", "Inventario", "Rentabilidad", "Ver resumen de todo"])
-
-if menu == "Finca":
-    st.header("📑 Gestión de Finca")
-
-    df = cargar_datos()
-
-    if not df.empty:
-        st.dataframe(df, use_container_width=True)
-
-        for i, row in df.iterrows():
-            borrar = st.button(f"🗑️ Borrar fila {i+1}", key=f"borrar_{i}")
-            if borrar:
-                borrar_registro(i)
-                st.experimental_rerun()
+# Leer hoja desde Excel
+def cargar_hoja(nombre_hoja):
+    if os.path.exists(ARCHIVO_EXCEL):
+        df = pd.read_excel(ARCHIVO_EXCEL, sheet_name=nombre_hoja)
+        return df
     else:
-        st.info("No hay datos en la hoja de finca.")
+        return pd.DataFrame()
+
+# Guardar hoja en Excel
+def guardar_hoja(nombre_hoja, df):
+    with pd.ExcelWriter(ARCHIVO_EXCEL, mode="a" if os.path.exists(ARCHIVO_EXCEL) else "w", engine="openpyxl", if_sheet_exists="replace") as writer:
+        df.to_excel(writer, sheet_name=nombre_hoja, index=False)
+
+# Inicializar variedades conocidas
+VARIEDADES_CONOCIDAS = ["Picual", "Arbequina", "Hojiblanca", "Cornicabra", "Manzanilla"]
+
+# Gestión de finca
+def gestion_finca():
+    st.markdown("## 📋 Gestión de Finca")
+
+    df = cargar_hoja("Finca")
+
+    st.markdown("### 📄 Datos actuales")
+    if not df.empty:
+        selected_idx = st.selectbox("Selecciona un registro para borrar:", df.index, format_func=lambda x: f"ID {df.loc[x, 'ID Parcela']} - {df.loc[x, 'Nombre']}")
+        if st.button("🗑️ Borrar registro seleccionado"):
+            df = df.drop(selected_idx)
+            guardar_hoja("Finca", df)
+            st.success("Registro eliminado correctamente")
+            st.experimental_rerun()
+
+        st.dataframe(df, use_container_width=True)
+    else:
+        st.info("No hay datos registrados aún.")
 
     st.markdown("---")
-    st.subheader("➕ Añadir nuevo registro")
+    st.markdown("### ➕ Añadir nuevo registro")
 
-    # Generar ID siguiente
-    next_id = "ID1"
-    if not df.empty:
-        last_id = df["ID Parcela"].iloc[-1]
-        try:
-            num = int(''.join(filter(str.isdigit, str(last_id)))) + 1
-            next_id = f"ID{num}"
-        except:
-            pass
+    # ID automático
+    nuevo_id = (df["ID Parcela"].astype(str).str.extract(r'(\d+)').dropna().astype(int).max()[0] + 1) if not df.empty else 1
 
-    # Variedades disponibles
-    variedades_disponibles = sorted(df["Variedad"].dropna().unique()) if not df.empty else []
-
-    # Inputs
     col1, col2 = st.columns(2)
     with col1:
-        id_parcela = st.text_input("ID Parcela", value=next_id, disabled=True)
-        variedad = st.selectbox("Variedad", opciones := variedades_disponibles + ["Otra"] if "Otra" not in variedades_disponibles else variedades_disponibles)
-        if variedad == "Otra":
-            variedad = st.text_input("Escribe nueva variedad")
-        olivos = st.text_input("Número total de olivos de la finca")
-    with col2:
         nombre = st.text_input("Nombre")
-        hectareas = st.number_input("Hectáreas", min_value=0.0, max_value=999.9, step=0.1, format="%.1f")
+    with col2:
+        variedad = st.selectbox("Variedad", VARIEDADES_CONOCIDAS + ["Otra"])
+
+    col3, col4 = st.columns(2)
+    with col3:
+        hectareas = st.number_input("Hectáreas", min_value=0.0, step=0.1)
+    with col4:
         riego = st.selectbox("Riego", ["sí", "no"])
 
+    num_olivos = st.text_input("Número total de olivos")
+
     if st.button("💾 Guardar en Finca"):
-        nuevo = pd.DataFrame({
-            "ID Parcela": [id_parcela],
+        nuevo_registro = pd.DataFrame({
+            "ID Parcela": [nuevo_id],
             "Nombre": [nombre],
             "Variedad": [variedad],
             "Hectáreas": [hectareas],
-            "Olivos": [olivos],
+            "Marco": [num_olivos],
             "Riego": [riego]
         })
-        df = pd.concat([df, nuevo], ignore_index=True)
-        guardar_datos(df)
-        st.success("✅ Guardado correctamente")
+        df = pd.concat([df, nuevo_registro], ignore_index=True)
+        guardar_hoja("Finca", df)
+        st.success("Guardado correctamente.")
         st.experimental_rerun()
 
+# Interfaz principal
+st.title("🌿 Aplicación sencilla para gestionar tu finca de olivar")
+st.caption("Diseñada para ser fácil, clara y útil para agricultores")
+
+menu = st.sidebar.radio("📌 ¿Qué quieres gestionar?", SECCIONES)
+
+if menu == "Finca":
+    gestion_finca()
 else:
-    st.info(f"La sección '{menu}' está en desarrollo.")
+    st.info(f"Funcionalidad '{menu}' en desarrollo.")
+
 
