@@ -242,7 +242,7 @@ elif menu == "Gastos":
         st.markdown("Selecciona el gasto que deseas eliminar:")
 
         opciones_borrar = [
-            f"{i} - 🏡 {row['Finca']} / 📅 {row['Fecha']} / 📂 {row['Categoría']} / 📝 {row['Descripción']} / 💶 {row['Importe (€)']}"
+        f"{i} - 🏡 {row['Finca']} / 📅 {pd.to_datetime(row['Fecha']).strftime('%d/%m/%Y')} / 📂 {row['Categoría']} / 📝 {row['Descripción']} / 💶 {row['Importe (€)']}"
             for i, row in df_editable.iterrows()
         ]
         seleccion_borrar = st.selectbox("🗑️ Gasto a eliminar", opciones_borrar)
