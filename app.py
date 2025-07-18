@@ -187,7 +187,3 @@ elif menu == "Gastos":
         else:
             st.markdown(f"<h4>💰 Total de gastos en la finca <i>{finca_seleccionada}</i>: <b>{total:.2f} €</b></h4>", unsafe_allow_html=True)
 
-    # 💾 Guardar el archivo Excel limpio
-    st.session_state[HOJA_GASTOS].to_excel(GASTOS_FILE, sheet_name=HOJA_GASTOS, index=False)
-
-
