@@ -195,6 +195,17 @@ elif menu == "Gastos":
         index = int(seleccion.split(" - ")[0])
         gasto = df_gastos.loc[index]
 
+        # 🔎 Mostrar detalles actuales del gasto antes de editar
+        st.markdown("### 👀 Detalles actuales del gasto seleccionado")
+        st.info(
+            f"**🏡 Finca:** {gasto['Finca']}\n\n"
+            f"**📅 Fecha:** {gasto['Fecha']}\n\n"
+            f"**📂 Categoría:** {gasto['Categoría']}\n\n"
+            f"**📝 Descripción:** {gasto['Descripción']}\n\n"
+            f"**💶 Importe:** {gasto['Importe (€)']} €"
+        )
+
+        # 📝 Formulario para modificar los datos
         with st.form("form_editar"):
             col1, col2 = st.columns(2)
             with col1:
@@ -217,11 +228,11 @@ elif menu == "Gastos":
             df_gastos.at[index, "Categoría"] = nueva_cat
             df_gastos.at[index, "Descripción"] = nueva_desc
             df_gastos.at[index, "Importe (€)"] = nuevo_imp
-            st.success("✅ Gasto modificado.")
+            st.success("✅ Gasto modificado correctamente.")
             st.rerun()
     else:
         st.info("ℹ️ No hay gastos para modificar.")
-
+        
     st.divider()
 
     # ❌ Borrar gasto
