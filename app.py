@@ -27,7 +27,7 @@ st.markdown("""
 menu = st.sidebar.radio("📋 ¿Qué quieres gestionar?", [
     "Finca", "Gastos", "Jornales", "Ingresos", "Abonos y Tratamientos", "Rentabilidad", "Ver resumen de todo"
 ])
-# Menu Finca
+# **********************************************Menu Finca*************************************************************
 if menu == "Finca":
     st.subheader("📋 Gestión de Finca")
 
@@ -92,11 +92,10 @@ if menu == "Finca":
     # Guardar Excel actualizado
     st.session_state[HOJA_FINCA].to_excel(EXCEL_FILE, sheet_name=HOJA_FINCA, index=False)
     
-# Menu Gastos
+#**********************************************Menu Gastos*************************************************
+
 elif menu == "Gastos":
     st.subheader("💸 Registro de Gastos de la Finca")
-
-    st.markdown("Introduce los siguientes gastos relacionados con la finca. Usa solo los campos necesarios.")
 
     GASTOS_FILE = "gastos_olivar.xlsx"
     HOJA_GASTOS = "Gastos"
@@ -113,18 +112,10 @@ elif menu == "Gastos":
     st.markdown("### ➕ Añadir nuevo gasto")
     fecha = st.date_input("Fecha del gasto")
     categorias = [
-        "GASÓLEOS Y ACEITES",
-        "TALLERES / REPARACIONES",
-        "MANTENIMIENTOS MAQUINARIA",
-        "PRODUCTOS FITOSANITARIOS",
-        "SEGUROS VEHÍCULOS",
-        "IMPUESTOS HACIENDA",
-        "SEGUROS SOCIALES",
-        "RIEGO",
-        "JORNALES MANTENIMIENTO FINCA",
-        "JORNALES RECOGIDA ACEITUNA",
-        "GASTOS EN RECOGIDA",
-        "OTROS"
+        "GASÓLEOS Y ACEITES", "TALLERES / REPARACIONES", "MANTENIMIENTOS MAQUINARIA",
+        "PRODUCTOS FITOSANITARIOS", "SEGUROS VEHÍCULOS", "IMPUESTOS HACIENDA",
+        "SEGUROS SOCIALES", "RIEGO", "JORNALES MANTENIMIENTO FINCA",
+        "JORNALES RECOGIDA ACEITUNA", "GASTOS EN RECOGIDA", "OTROS"
     ]
     categoria = st.selectbox("Tipo de gasto", categorias)
     descripcion = st.text_input("Descripción (opcional)")
@@ -147,33 +138,43 @@ elif menu == "Gastos":
     total = st.session_state[HOJA_GASTOS]["Importe (€)"].sum()
     st.markdown(f"**💰 Total acumulado de gastos: {total:.2f} €**")
 
-    st.markdown("### 📝 Editar o borrar gastos")
-    if len(st.session_state[HOJA_GASTOS]) > 0:
-        index_editar = st.selectbox("Selecciona el índice del gasto a editar/borrar", st.session_state[HOJA_GASTOS].index.tolist(), key="editar_borrar")
+    # 🔧 Editar gasto
+    st.markdown("### ✏️ Editar un gasto existente")
+    if len(df_gastos) > 0:
+        opciones_editables = {f"{i} - {row['Categoría']} / {row['Descripción']}": i for i, row in df_gastos.iterrows()}
+        selected_label_edit = st.selectbox("Selecciona el gasto a editar", list(opciones_editables.keys()), key="editar_gasto")
+        index_editar = opciones_editables[selected_label_edit]
+        gasto = df_gastos.loc[index_editar]
 
-        gasto = st.session_state[HOJA_GASTOS].iloc[index_editar]
+        nueva_fecha = st.date_input("Nueva fecha", value=gasto["Fecha"], key="edit_fecha")
+        nueva_categoria = st.selectbox("Nueva categoría", categorias, index=categorias.index(gasto["Categoría"]), key="edit_cat")
+        nueva_desc = st.text_input("Nueva descripción", value=gasto["Descripción"], key="edit_desc")
+        nuevo_importe = st.number_input("Nuevo importe (€)", min_value=0.0, step=1.0, value=gasto["Importe (€)"], key="edit_imp")
 
-        with st.expander("✏️ Editar gasto seleccionado"):
-            nueva_fecha = st.date_input("Nueva fecha", value=gasto["Fecha"], key="edit_fecha")
-            nueva_categoria = st.selectbox("Nueva categoría", categorias, index=categorias.index(gasto["Categoría"]), key="edit_cat")
-            nueva_desc = st.text_input("Nueva descripción", value=gasto["Descripción"], key="edit_desc")
-            nuevo_importe = st.number_input("Nuevo importe (€)", min_value=0.0, step=1.0, value=gasto["Importe (€)"], key="edit_imp")
+        if st.button("✅ Guardar cambios"):
+            st.session_state[HOJA_GASTOS].at[index_editar, "Fecha"] = nueva_fecha
+            st.session_state[HOJA_GASTOS].at[index_editar, "Categoría"] = nueva_categoria
+            st.session_state[HOJA_GASTOS].at[index_editar, "Descripción"] = nueva_desc
+            st.session_state[HOJA_GASTOS].at[index_editar, "Importe (€)"] = nuevo_importe
+            st.success("✅ Gasto actualizado.")
+            st.rerun()
+    else:
+        st.info("No hay gastos para editar.")
 
-            if st.button("✅ Guardar cambios"):
-                st.session_state[HOJA_GASTOS].at[index_editar, "Fecha"] = nueva_fecha
-                st.session_state[HOJA_GASTOS].at[index_editar, "Categoría"] = nueva_categoria
-                st.session_state[HOJA_GASTOS].at[index_editar, "Descripción"] = nueva_desc
-                st.session_state[HOJA_GASTOS].at[index_editar, "Importe (€)"] = nuevo_importe
-                st.success("Gasto actualizado.")
-                st.rerun()
+    # ❌ Borrar gasto
+    st.markdown("### ❌ Borrar un gasto")
+    if len(df_gastos) > 0:
+        opciones_borrables = {f"{i} - {row['Categoría']} / {row['Descripción']}": i for i, row in df_gastos.iterrows()}
+        selected_label_del = st.selectbox("Selecciona el gasto a borrar", list(opciones_borrables.keys()), key="borrar_gasto")
+        index_borrar = opciones_borrables[selected_label_del]
 
-        if st.checkbox("⚠️ Confirmo que quiero borrar este gasto", key="conf_borrar"):
+        confirmar = st.checkbox("⚠️ Confirmo que deseo borrar este gasto", key="conf_borrar")
+        if confirmar:
             if st.button("❌ Borrar gasto"):
-                st.session_state[HOJA_GASTOS] = st.session_state[HOJA_GASTOS].drop(index=index_editar).reset_index(drop=True)
-                st.success("Gasto eliminado correctamente.")
+                st.session_state[HOJA_GASTOS] = df_gastos.drop(index=index_borrar).reset_index(drop=True)
+                st.success("✅ Gasto eliminado correctamente.")
                 st.rerun()
     else:
-        st.info("No hay gastos registrados para editar o borrar.")
+        st.info("No hay gastos para borrar.")
 
     st.session_state[HOJA_GASTOS].to_excel(GASTOS_FILE, sheet_name=HOJA_GASTOS, index=False)
-
