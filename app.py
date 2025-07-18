@@ -1,83 +1,82 @@
+
 import streamlit as st
 import pandas as pd
+from openpyxl import load_workbook
 import os
 
-st.set_page_config(page_title="Gestión de Finca de Olivar", layout="wide")
-
-EXCEL_FILE = "finca_olivar_datos.xlsx"
-HOJA_FINCA = "Finca"
-
-if HOJA_FINCA not in st.session_state:
-    if os.path.exists(EXCEL_FILE):
-        df_finca = pd.read_excel(EXCEL_FILE, sheet_name=HOJA_FINCA)
-        # Asegurar que se use la nueva columna
-        if "Marco" in df_finca.columns:
-            df_finca = df_finca.drop(columns=["Marco"])
-    else:
-        df_finca = pd.DataFrame(columns=["ID Parcela", "Nombre", "Variedad", "Hectáreas", "Número total de olivos", "Riego"])
-    st.session_state[HOJA_FINCA] = df_finca
-else:
-    df_finca = st.session_state[HOJA_FINCA]
-
+# Estilo global
+st.set_page_config(page_title="Gestión Finca de Olivar", layout="wide")
 st.markdown("""
-    <h1>🌿 Aplicación sencilla para gestionar tu finca de olivar</h1>
-    <p style='color:gray;'>Diseñada para ser fácil, clara y útil para agricultores</p>
+<style>
+    .main {background-color: #f4f4f4; padding: 1rem;}
+    .block-container {padding: 2rem 2rem;}
+    h1 {color: #2E7D32;}
+    .stButton>button {background-color: #4CAF50; color: white; border-radius: 8px; height: 2.5em;}
+</style>
 """, unsafe_allow_html=True)
 
-menu = st.sidebar.radio("📋 ¿Qué quieres gestionar?", [
-    "Finca", "Labores", "Costes", "Ingresos", "Inventario", "Rentabilidad", "Ver resumen de todo"
-])
+st.title("🌿 Aplicación sencilla para gestionar tu finca de olivar")
+st.caption("Diseñada para ser fácil, clara y útil para agricultores")
 
-if menu == "Finca":
-    st.subheader("📋 Gestión de Finca")
+EXCEL_FILE = "finca_olivar_datos.xlsx"
 
-    selected_index = st.session_state.get("selected_index", None)
-
-    def mostrar_tabla():
-        st.dataframe(df_finca, use_container_width=True)
-
-    mostrar_tabla()
-
-    st.markdown("""<hr><h3>➕ Añadir nuevo registro</h3>""", unsafe_allow_html=True)
-
-    id_parcela = len(df_finca) + 1
-    nombre = st.text_input("Nombre")
-    variedades_disponibles = df_finca["Variedad"].dropna().unique().tolist() or ["Picual", "Arbequina", "Hojiblanca"]
-    variedad = st.selectbox("Variedad", opciones := sorted(set(variedades_disponibles)))
-    hectareas = st.number_input("Hectáreas", min_value=0.0, step=0.1)
-    numero_olivos = st.number_input("Número total de olivos", min_value=0, step=100)
-    riego = st.selectbox("Riego", ["sí", "no"])
-
-    if st.button("💾 Guardar en Finca"):
-        nuevo = pd.DataFrame([{
-            "ID Parcela": id_parcela,
-            "Nombre": nombre,
-            "Variedad": variedad,
-            "Hectáreas": hectareas,
-            "Número total de olivos": numero_olivos,
-            "Riego": riego
-        }])
-        st.session_state[HOJA_FINCA] = pd.concat([df_finca, nuevo], ignore_index=True)
-        st.session_state.selected_index = None
-        st.rerun()
-
-    st.markdown("""<hr><h3>🗑️ Borrar un registro</h3>""", unsafe_allow_html=True)
-
-    if len(df_finca) > 0:
-        nombres_fincas = df_finca["Nombre"].tolist()
-        indices_fincas = df_finca.index.tolist()
-        nombre_a_indice = {nombre: idx for nombre, idx in zip(nombres_fincas, indices_fincas)}
-
-        selected_nombre = st.selectbox("Selecciona el nombre de la finca a borrar", nombres_fincas, key="nombre_borrar")
-
-        if st.button("❌ Borrar registro"):
-            selected_index = nombre_a_indice[selected_nombre]
-            st.session_state[HOJA_FINCA] = df_finca.drop(index=selected_index).reset_index(drop=True)
-            st.session_state.selected_index = None
-            st.rerun()
+# Cargar o crear archivo Excel
+def cargar_datos():
+    if os.path.exists(EXCEL_FILE):
+        return pd.read_excel(EXCEL_FILE, sheet_name=None)
     else:
-        st.info("No hay registros para borrar.")
+        return {
+            "Finca": pd.DataFrame(columns=["ID Parcela", "Nombre", "Variedad", "Hectáreas", "Marco", "Riego"]),
+            "Labores": pd.DataFrame(columns=["Fecha", "Parcela", "Tipo", "Descripción", "Operario", "Horas", "Costo (€)"]),
+            "Costes": pd.DataFrame(columns=["Fecha", "Categoría", "Descripción", "Importe (€)", "Relacionado con"]),
+            "Ingresos": pd.DataFrame(columns=["Fecha", "Concepto", "Descripción", "Importe (€)", "Tipo"]),
+            "Inventario": pd.DataFrame(columns=["Producto", "Inicial", "Entrada", "Salida", "Stock", "Unidad"]),
+            "Rentabilidad": pd.DataFrame(columns=["Parcela", "Campaña", "Ingresos (€)", "Costes (€)", "Margen (€)", "Margen €/ha"])
+        }
 
-    # Guardar Excel actualizado
-    st.session_state[HOJA_FINCA].to_excel(EXCEL_FILE, sheet_name=HOJA_FINCA, index=False)
+def guardar_datos(xls):
+    with pd.ExcelWriter(EXCEL_FILE, engine="openpyxl") as writer:
+        for sheet, df in xls.items():
+            df.to_excel(writer, sheet_name=sheet, index=False)
+
+# Cargar datos existentes o vacíos
+datos = cargar_datos()
+
+# Menú lateral simplificado
+menu = st.sidebar.selectbox("📘 ¿Qué quieres gestionar?", list(datos.keys()) + ["Ver resumen de todo"])
+
+# Mostrar datos y editor intuitivo
+def mostrar_editor(nombre_hoja):
+    st.subheader(f"📋 Gestión de {nombre_hoja}")
+    df = datos[nombre_hoja]
+    if df.empty:
+        st.info("No hay datos registrados todavía.")
+    else:
+        st.dataframe(df, use_container_width=True, hide_index=True)
+
+    st.markdown("---")
+    st.markdown("### ➕ Añadir un nuevo dato")
+    columnas = df.columns.tolist()
+    nuevo = {}
+    cols = st.columns(2)
+    for i, col in enumerate(columnas):
+        nuevo[col] = cols[i % 2].text_input(col, key=f"{nombre_hoja}_{col}")
+
+    if st.button(f"Guardar en {nombre_hoja}", key=f"guardar_{nombre_hoja}"):
+        datos[nombre_hoja] = pd.concat([df, pd.DataFrame([nuevo])], ignore_index=True)
+        guardar_datos(datos)
+        st.success("✅ Guardado correctamente.")
+        st.experimental_rerun()
+
+# Mostrar resumen general
+if menu == "Ver resumen de todo":
+    st.header("📊 Resumen general de la finca")
+    for hoja, df in datos.items():
+        with st.expander(f"📁 {hoja} ({len(df)} registros)"):
+            if df.empty:
+                st.write("No hay datos todavía.")
+            else:
+                st.dataframe(df, use_container_width=True, hide_index=True)
+else:
+    mostrar_editor(menu)
 
